@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 
 	"github.com/bozkayasalih01x/cache/cache"
@@ -8,10 +9,22 @@ import (
 )
 
 func main() {
+	var listenAddr string
+	var leaderAddr string
+	flag.StringVar(&listenAddr, "listenaddr", "", "set up listen address")
+	flag.StringVar(&leaderAddr, "leadneraddr", "", "set up leader address")
+	flag.Parse()
+
+	if listenAddr == "" || leaderAddr == "" {
+		fmt.Printf("%s or %s must be setted", listenAddr, leaderAddr)
+		flag.Usage()
+		return
+	}
+
 	opts := server.ServerOptions{
-		ListenAddr: ":3000",
+		ListenAddr: listenAddr,
 		IsLeader:   false,
-		LeaderAddr: ":4000",
+		LeaderAddr: leaderAddr,
 	}
 
 	fmt.Printf("server started on port %s\n", opts.ListenAddr)
