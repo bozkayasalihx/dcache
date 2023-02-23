@@ -24,7 +24,6 @@ func (c *Cache) Get(key []byte) ([]byte, error) {
 	if !ok {
 		return []byte(""), nil
 	}
-	//note; make this function more brother;
 	return val, nil
 }
 
