@@ -11,8 +11,8 @@ import (
 func main() {
 	var listenAddr string
 	var leaderAddr string
-	flag.StringVar(&listenAddr, "listenaddr", "", "set up listen address")
-	flag.StringVar(&leaderAddr, "leadneraddr", "", "set up leader address")
+	flag.StringVar(&listenAddr, "a", "", "set up listen address")
+	flag.StringVar(&leaderAddr, "la", "", "set up leader address")
 	flag.Parse()
 
 	if listenAddr == "" || leaderAddr == "" {
