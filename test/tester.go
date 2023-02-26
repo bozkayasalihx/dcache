@@ -1,25 +1,36 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"net"
-	"time"
+
+	proto "github.com/bozkayasalih01x/cache/protocols"
 )
 
 func main() {
 
-	con, err := net.Dial("tcp", ":3000")
+	con, err := net.Dial("tcp", ":3001")
 	if err != nil {
 		panic(err)
 	}
-
-	_, err = con.Write([]byte("SET maker google"))
-	if err != nil {
-		panic(err)
+	cmd := &proto.MessageSetType{
+		Key:   []byte("foo"),
+		Value: []byte("bar"),
 	}
 
-	time.Sleep(time.Second * 5)
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, proto.MSGSET)
 
-	_, err = con.Write([]byte("GET maker"))
+	keyLen := int32(len(cmd.Key))
+	binary.Write(buf, binary.LittleEndian, keyLen)
+	binary.Write(buf, binary.LittleEndian, cmd.Key)
+
+	valueLen := int32(len(cmd.Value))
+	binary.Write(buf, binary.LittleEndian, valueLen)
+	binary.Write(buf, binary.LittleEndian, cmd.Value)
+
+	_, err = con.Write(buf.Bytes())
 	if err != nil {
 		panic(err)
 	}

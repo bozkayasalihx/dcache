@@ -29,23 +29,21 @@ func ParseCommand(r io.Reader) (interface{}, error) {
 	if err != nil {
 		return fmt.Errorf("couldnt read the command %v", err), nil
 	}
+
 	switch command {
 	case MSGGET:
-		cmd, err := handleGetCommand(r)
-		return cmd, err
+		return handleGetCommand(r)
 	case MSGSET:
-		cmd, err := handleSetCommand(r)
-		return cmd, err
+		return handleSetCommand(r)
 	default:
-		err := fmt.Errorf("couldnt identify the command")
-		return nil, err
+		return nil, fmt.Errorf("couldnt identify the command\n")
 	}
 }
 
 func handleGetCommand(r io.Reader) (*MessageGetType, error) {
 	cmd := &MessageGetType{}
-	var keyLen int
-	err := binary.Read(r, binary.LittleEndian, keyLen)
+	var keyLen int32
+	err := binary.Read(r, binary.LittleEndian, &keyLen)
 	if err != nil {
 		return nil, err
 	}
@@ -57,16 +55,25 @@ func handleGetCommand(r io.Reader) (*MessageGetType, error) {
 
 func handleSetCommand(r io.Reader) (*MessageSetType, error) {
 	cmd := &MessageSetType{}
-	var keyLen int
-	err := binary.Read(r, binary.LittleEndian, keyLen)
+	var keyLen int32
+	err := binary.Read(r, binary.LittleEndian, &keyLen)
 	if err != nil {
 		return nil, err
 	}
 	cmd.Key = make([]byte, keyLen)
 	err = binary.Read(r, binary.LittleEndian, &cmd.Key)
-	var ValueLen int
-	err = binary.Read(r, binary.LittleEndian, ValueLen)
+	if err != nil {
+		return nil, err
+	}
+	var ValueLen int32
+	err = binary.Read(r, binary.LittleEndian, &ValueLen)
+	if err != nil {
+		return nil, err
+	}
 	err = binary.Read(r, binary.LittleEndian, &cmd.Value)
-	return cmd, err
+	if err != nil {
+		return nil, err
+	}
+	return cmd, nil
 
 }
