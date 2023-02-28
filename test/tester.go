@@ -3,39 +3,65 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"net"
+	"time"
 
 	proto "github.com/bozkayasalih01x/cache/protocols"
 )
 
 func main() {
 
-	con, err := net.Dial("tcp", ":3001")
+	conn, err := net.Dial("tcp", ":3001")
 	if err != nil {
 		panic(err)
 	}
-	cmd := &proto.MessageSetType{
+	setCmd := &proto.MessageSetType{
 		Key:   []byte("foo"),
 		Value: []byte("bar"),
 	}
 
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, proto.MSGSET)
+	setBuff := new(bytes.Buffer)
+	binary.Write(setBuff, binary.LittleEndian, proto.MSGSET)
 
-	keyLen := int32(len(cmd.Key))
-	binary.Write(buf, binary.LittleEndian, keyLen)
-	binary.Write(buf, binary.LittleEndian, cmd.Key)
+	keyLen := int32(len(setCmd.Key))
+	binary.Write(setBuff, binary.LittleEndian, keyLen)
+	binary.Write(setBuff, binary.LittleEndian, setCmd.Key)
 
-	valueLen := int32(len(cmd.Value))
-	binary.Write(buf, binary.LittleEndian, valueLen)
-	binary.Write(buf, binary.LittleEndian, cmd.Value)
+	valueLen := int32(len(setCmd.Value))
+	binary.Write(setBuff, binary.LittleEndian, valueLen)
+	binary.Write(setBuff, binary.LittleEndian, setCmd.Value)
 
-	_, err = con.Write(buf.Bytes())
+	_, err = conn.Write(setBuff.Bytes())
 	if err != nil {
 		panic(err)
 	}
 
-	defer con.Close()
+	time.Sleep(time.Second * 5)
+	getCmd := &proto.MessageGetType{
+		Key: []byte("foo"),
+	}
+
+	getBuff := new(bytes.Buffer)
+	binary.Write(getBuff, binary.LittleEndian, proto.MSGGET)
+	getkeylen := int32(len(getCmd.Key))
+	binary.Write(getBuff, binary.LittleEndian, getkeylen)
+	binary.Write(getBuff, binary.LittleEndian, getCmd.Key)
+
+	_, err = conn.Write(getBuff.Bytes())
+	if err != nil {
+		panic(err)
+	}
+
+	bufData := make([]byte, 1024)
+	n, err := conn.Read(bufData)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("make me alive -> %v\n", string(bufData[:n]))
+
+	defer conn.Close()
 
 	select {}
 
