@@ -85,7 +85,6 @@ func (s *Server) handleSetCommand(conn net.Conn, cmd *proto.MessageSetType) {
 		log.Fatalf("couldnt set %s to %s storage", string(cmd.Key), string(cmd.Value))
 
 	}
-	fmt.Println("finished to set cmd \n")
 }
 
 func (s *Server) handleGetCommand(conn net.Conn, cmd *proto.MessageGetType) {
@@ -94,7 +93,7 @@ func (s *Server) handleGetCommand(conn net.Conn, cmd *proto.MessageGetType) {
 		log.Fatalf("couldnt get the data from cache %v  ", err)
 	}
 
-	fmt.Printf("the data is -> %s \n", string(val))
+	fmt.Printf("the data from %s connection is  -> %s \n", conn.RemoteAddr(), string(val))
 	_, err = conn.Write(val)
 	if err != nil {
 		panic(err)
