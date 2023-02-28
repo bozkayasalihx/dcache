@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 
 	"github.com/bozkayasalih01x/cache/cache"
@@ -74,17 +75,28 @@ func (s *Server) handleCommand(conn net.Conn, cmd interface{}) {
 		s.handleGetCommand(conn, v)
 	case *proto.MessageSetType:
 		s.handleSetCommand(conn, v)
-	default:
-		panic("command not found")
 	}
 }
 
 func (s *Server) handleSetCommand(conn net.Conn, cmd *proto.MessageSetType) {
-	defer conn.Close()
-	fmt.Printf("the set command is this %v", &cmd)
+	fmt.Printf("key is  -> %s and value is %s \n", cmd.Key, cmd.Value)
+	err := s.c.Set(cmd.Key, cmd.Value)
+	if err != nil {
+		log.Fatalf("couldnt set %s to %s storage", string(cmd.Key), string(cmd.Value))
+
+	}
+	fmt.Println("finished to set cmd \n")
 }
 
 func (s *Server) handleGetCommand(conn net.Conn, cmd *proto.MessageGetType) {
-	defer conn.Close()
-	fmt.Printf("the get command is this %v", &cmd)
+	val, err := s.c.Get(cmd.Key)
+	if err != nil {
+		log.Fatalf("couldnt get the data from cache %v  ", err)
+	}
+
+	fmt.Printf("the data is -> %s \n", string(val))
+	_, err = conn.Write(val)
+	if err != nil {
+		panic(err)
+	}
 }

@@ -28,6 +28,7 @@ func ParseCommand(r io.Reader) (interface{}, error) {
 	err := binary.Read(r, binary.LittleEndian, &command)
 	if err != nil {
 		return fmt.Errorf("couldnt read the command %v", err), nil
+
 	}
 
 	switch command {
@@ -65,11 +66,12 @@ func handleSetCommand(r io.Reader) (*MessageSetType, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ValueLen int32
-	err = binary.Read(r, binary.LittleEndian, &ValueLen)
+	var valueLen int32
+	err = binary.Read(r, binary.LittleEndian, &valueLen)
 	if err != nil {
 		return nil, err
 	}
+	cmd.Value = make([]byte, valueLen)
 	err = binary.Read(r, binary.LittleEndian, &cmd.Value)
 	if err != nil {
 		return nil, err
