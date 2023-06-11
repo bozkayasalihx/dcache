@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type Cache struct {
@@ -49,14 +50,18 @@ func (c *Cache) Update(key []byte, val []byte) error {
 	return nil
 }
 
-func (c *Cache) Delete(key []byte) ([]byte, error) {
+func (c *Cache) Delete(key []byte, ttl time.Duration) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	val, ok := c.data[string(key)]
-	if !ok {
-		return []byte(""), fmt.Errorf("couldn't find the %s", string(key))
-	}
-	return val, nil
+  if ttl > 0 {
+    go func() {
+      <-time.After(ttl) 
+      delete(c.data, string(key))
+    }()
+  }
+  delete(c.data ,string(key))
+
+  return nil
 
 }
