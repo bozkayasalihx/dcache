@@ -28,9 +28,16 @@ func (c *Cache) Get(key []byte) ([]byte, error) {
 	return val, nil
 }
 
-func (c *Cache) Set(key []byte, val []byte) error {
+func (c *Cache) Set(key []byte, val []byte, ttl time.Duration) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+  
+  if ttl > 0 {
+    go func() {
+      <-time.After(ttl)
+      delete(c.data, string(key))
+    }()
+  }
 
 	c.data[string(key)] = val
 	return nil
@@ -50,18 +57,10 @@ func (c *Cache) Update(key []byte, val []byte) error {
 	return nil
 }
 
-func (c *Cache) Delete(key []byte, ttl time.Duration) error {
+func (c *Cache) Delete(key []byte) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-  if ttl > 0 {
-    go func() {
-      <-time.After(ttl) 
-      delete(c.data, string(key))
-    }()
-  }
   delete(c.data ,string(key))
-
   return nil
-
 }
