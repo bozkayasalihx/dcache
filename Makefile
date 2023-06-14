@@ -1,8 +1,14 @@
-build: 
-	go build -o bin/sbcache
+testrun:
+	go run test/test.go
 
-run: build 
-	bin/sbcache -a :3001 -la :4001
+build:
+	go build -o bin/dcache
 
-runtest: 
-	go run test/tester.go 
+run: build
+	./bin/dcache
+
+runfollower: build
+	./bin/dcache --listenAddr :4000 
+
+# --leaderaddr :3000
+
