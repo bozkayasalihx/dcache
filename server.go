@@ -42,6 +42,18 @@ func (s *Server) Init() {
 		log.Fatalf("cound't create new server: %v", err)
 	}
 
+	// NOTE: handle dial when its not leader
+	if !s.opts.isLeader {
+		go func() {
+			conn, err := net.Dial("tcp", *listenAddr)
+			if err != nil {
+				log.Printf("couldn't dial to conn: %v", err)
+				return
+			}
+			s.handleConn(conn)
+		}()
+	}
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -52,10 +64,14 @@ func (s *Server) Init() {
 }
 
 func (s *Server) handleConn(conn net.Conn) {
+	defer conn.Close()
 	fmt.Printf("connection made %s to %s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
-
-	// defer conn.Close()
 	buf := make([]byte, 1024)
+
+	if s.opts.isLeader {
+		s.clients[conn] = struct{}{}
+	}
+
 	for {
 		n, err := conn.Read(buf)
 		if err != nil {
@@ -80,6 +96,8 @@ const (
 func (s *Server) handleMsg(conn net.Conn, rawData []byte) {
 	msg, err := s.parseMessage(rawData)
 	if err != nil {
+		fmt.Printf("failed to parse command: %v\n", err)
+		conn.Write([]byte(err.Error()))
 		return
 	}
 	fmt.Printf("msg received: %v\n", msg)
@@ -96,7 +114,8 @@ func (s *Server) handleMsg(conn net.Conn, rawData []byte) {
 		err = errors.New("invalid cmd detected\n")
 	}
 	if err != nil {
-		fmt.Printf("errors: %v", err)
+		fmt.Printf("errors: %v\n", err)
+		conn.Write([]byte(err.Error()))
 	}
 }
 
@@ -148,7 +167,6 @@ func (s *Server) handleGetCmd(conn net.Conn, msg *Message) error {
 	}
 
 	// NOTE: print out the resp test demostration
-	fmt.Println(string(resp))
 	if _, err := conn.Write(resp); err != nil {
 		return fmt.Errorf("couldn't write to connection: %v\n", err)
 	}
@@ -162,15 +180,19 @@ func (s *Server) handleGetCmd(conn net.Conn, msg *Message) error {
 }
 
 func (s *Server) handleJoinCmd(conn net.Conn, msg *Message) error {
+	// NOTE: not implemented yet. working on
 	return nil
 }
 
 func (s *Server) sendToMembers(ctx context.Context, msg *Message) error {
 	for client := range s.clients {
+		rawMsg := msg.ToBytes()
 		fmt.Printf("distributing to %s\n", client.LocalAddr().String())
-		_, err := client.Write(msg.ToBytes())
+		fmt.Printf("forwarding raw msg to followers %s", string(rawMsg))
+		_, err := client.Write(rawMsg)
 		if err != nil {
-			return err
+			fmt.Printf("couldn't write to follower %v", err)
+			continue
 		}
 	}
 	return nil
