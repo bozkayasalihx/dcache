@@ -42,6 +42,7 @@ func (s *Server) Init() {
 		log.Fatalf("cound't create new server: %v", err)
 	}
 
+
 	// NOTE: handle dial when its not leader
 	if !s.opts.isLeader {
 		go func() {
@@ -54,6 +55,7 @@ func (s *Server) Init() {
 		}()
 	}
 
+  
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -65,6 +67,7 @@ func (s *Server) Init() {
 
 func (s *Server) handleConn(conn net.Conn) {
 	defer conn.Close()
+  
 	fmt.Printf("connection made %s to %s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
 	buf := make([]byte, 1024)
 
@@ -72,6 +75,9 @@ func (s *Server) handleConn(conn net.Conn) {
 		s.clients[conn] = struct{}{}
 	}
 
+
+	buf := make([]byte, 1024)
+  
 	for {
 		n, err := conn.Read(buf)
 		if err != nil {
@@ -188,10 +194,10 @@ func (s *Server) sendToMembers(ctx context.Context, msg *Message) error {
 	for client := range s.clients {
 		rawMsg := msg.ToBytes()
 		fmt.Printf("distributing to %s\n", client.LocalAddr().String())
-		fmt.Printf("forwarding raw msg to followers %s", string(rawMsg))
+		fmt.Printf("forwarding raw msg to followers %s\n", string(rawMsg))
 		_, err := client.Write(rawMsg)
 		if err != nil {
-			fmt.Printf("couldn't write to follower %v", err)
+			fmt.Printf("couldn't write to follower %v\n", err)
 			continue
 		}
 	}
