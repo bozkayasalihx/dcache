@@ -8,7 +8,5 @@ run: build
 	./bin/dcache
 
 runfollower: build
-	./bin/dcache --listenAddr :4000 
-
-# --leaderaddr :3000
+	./bin/dcache --listenAddr :4000  --leaderAddr  :3000
 
